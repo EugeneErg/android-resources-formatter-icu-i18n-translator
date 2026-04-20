@@ -1,0 +1,17 @@
+{
+  "name": "eugene-erg/android-resources-formatter-icu-i18n-translator",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "require": {
+    "eugene-erg/icu-i18n-translator": "^1.0",
+    "ext-dom": "*",
+    "ext-libxml": "*",
+    "ext-simplexml": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "EugeneErg\\AndroidResourcesFormatterIcuI18nTranslator\\": "src/"
+    }
+  }
+}

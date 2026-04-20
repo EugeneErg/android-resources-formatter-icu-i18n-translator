@@ -1,0 +1,112 @@
+<resources>
+
+    <!-- ===================== -->
+    <!-- SIMPLE STRINGS -->
+    <!-- ===================== -->
+
+    <string name="hello">Hello</string>
+    <string name="welcome">Welcome, %1$s</string>
+
+    <!-- ===================== -->
+    <!-- PLURALS -->
+    <!-- ===================== -->
+
+    <plurals name="items_count">
+        <item quantity="zero">%d items</item>
+        <item quantity="one">%d item</item>
+        <item quantity="two">%d items</item>
+        <item quantity="few">%d items</item>
+        <item quantity="many">%d items</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+
+    <!-- ===================== -->
+    <!-- GENDER (manual split) -->
+    <!-- ===================== -->
+
+    <string name="welcome_male">Welcome, Mr. %1$s</string>
+    <string name="welcome_female">Welcome, Ms. %1$s</string>
+    <string name="welcome_other">Welcome, %1$s</string>
+
+    <!-- ===================== -->
+    <!-- GENDER + PLURAL (duplication) -->
+    <!-- ===================== -->
+
+    <plurals name="invite_male">
+        <item quantity="one">%d friend invited him</item>
+        <item quantity="other">%d friends invited him</item>
+    </plurals>
+
+    <plurals name="invite_female">
+        <item quantity="one">%d friend invited her</item>
+        <item quantity="other">%d friends invited her</item>
+    </plurals>
+
+    <plurals name="invite_other">
+        <item quantity="one">%d friend invited them</item>
+        <item quantity="other">%d friends invited them</item>
+    </plurals>
+
+    <!-- ===================== -->
+    <!-- NUMBERS -->
+    <!-- ===================== -->
+
+    <string name="price">%1$.2f $</string>
+    <string name="number">%1$d</string>
+
+    <!-- ===================== -->
+    <!-- DATE / TIME -->
+    <!-- ===================== -->
+
+    <string name="date">%1$tY-%1$tm-%1$td</string>
+    <string name="time">%1$tH:%1$tM</string>
+
+    <!-- ===================== -->
+    <!-- ORDINAL (manual) -->
+    <!-- ===================== -->
+
+    <string name="ordinal_1">1st</string>
+    <string name="ordinal_2">2nd</string>
+    <string name="ordinal_3">3rd</string>
+    <string name="ordinal_other">%1$dth</string>
+
+    <!-- ===================== -->
+    <!-- COMPLEX STRING -->
+    <!-- ===================== -->
+
+    <string name="complex">%1$s has %2$d items</string>
+
+    <!-- ===================== -->
+    <!-- STRING ARRAY -->
+    <!-- ===================== -->
+
+    <string-array name="days">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
+
+    <!-- ===================== -->
+    <!-- STRING ARRAY (UI OPTIONS) -->
+    <!-- ===================== -->
+
+    <string-array name="sort_options">
+        <item>By name</item>
+        <item>By date</item>
+        <item>By size</item>
+    </string-array>
+
+    <!-- ===================== -->
+    <!-- ARRAY (anti-pattern example) -->
+    <!-- ===================== -->
+
+    <string-array name="items_bad_example">
+        <item>%d item</item>
+        <item>%d items</item>
+    </string-array>
+
+</resources>

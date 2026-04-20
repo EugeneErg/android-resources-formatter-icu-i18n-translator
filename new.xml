@@ -1,0 +1,140 @@
+<resources>
+
+    <!-- ===================== -->
+    <!-- SIMPLE STRINGS -->
+    <!-- ===================== -->
+
+    <string name="hello">Hello</string>
+
+    <string name="welcome">
+        Welcome, {name}
+    </string>
+
+    <!-- ===================== -->
+    <!-- PLURAL (ICU) -->
+    <!-- ===================== -->
+
+    <string name="items_count">
+        {count, plural,
+        zero {# items}
+        one {# item}
+        two {# items}
+        few {# items}
+        many {# items}
+        other {# items}
+        }
+    </string>
+
+    <!-- ===================== -->
+    <!-- GENDER -->
+    <!-- ===================== -->
+
+    <string name="welcome_gender">
+        {gender, select,
+        male {Welcome, Mr. {name}}
+        female {Welcome, Ms. {name}}
+        other {Welcome, {name}}
+        }
+    </string>
+
+    <!-- ===================== -->
+    <!-- GENDER + PLURAL -->
+    <!-- ===================== -->
+
+    <string name="invite">
+        {gender, select,
+        male {{count, plural,
+        one {# friend invited him}
+        other {# friends invited him}
+        }}
+        female {{count, plural,
+        one {# friend invited her}
+        other {# friends invited her}
+        }}
+        other {{count, plural,
+        one {# friend invited them}
+        other {# friends invited them}
+        }}
+        }
+    </string>
+
+    <!-- ===================== -->
+    <!-- NUMBERS -->
+    <!-- ===================== -->
+
+    <string name="price">
+        {price, number, currency}
+    </string>
+
+    <string name="number">
+        {value, number}
+    </string>
+
+    <!-- ===================== -->
+    <!-- DATE / TIME -->
+    <!-- ===================== -->
+
+    <string name="date">
+        {date, date, long}
+    </string>
+
+    <string name="time">
+        {time, time, short}
+    </string>
+
+    <!-- ===================== -->
+    <!-- ORDINAL -->
+    <!-- ===================== -->
+
+    <string name="ordinal">
+        {number, selectordinal,
+        zero {#th}
+        one {#st}
+        two {#nd}
+        few {#rd}
+        many {#th}
+        other {#th}
+        }
+    </string>
+
+    <!-- ===================== -->
+    <!-- COMPLEX -->
+    <!-- ===================== -->
+
+    <string name="complex">
+        {name} has {count, plural,
+        one {# item}
+        other {# items}
+        }
+    </string>
+
+    <!-- ===================== -->
+    <!-- STRING ARRAY (unchanged) -->
+    <!-- ===================== -->
+
+    <string-array name="days">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
+
+    <string-array name="sort_options">
+        <item>By name</item>
+        <item>By date</item>
+        <item>By size</item>
+    </string-array>
+
+    <!-- ===================== -->
+    <!-- ARRAY (still bad for plural logic) -->
+    <!-- ===================== -->
+
+    <string-array name="items_bad_example">
+        <item>%d item</item>
+        <item>%d items</item>
+    </string-array>
+
+</resources>
