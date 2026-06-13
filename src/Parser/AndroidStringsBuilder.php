@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace EugeneErg\AndroidResourcesFormatterIcuI18nTranslator\Parser;
 
@@ -14,8 +14,6 @@ final readonly class AndroidStringsBuilder
 {
     /**
      * @param array<XmlPlurals|XmlString|XmlStringArray> $data
-     *
-     * @return string
      */
     public function build(array $data): string
     {
@@ -54,7 +52,7 @@ final readonly class AndroidStringsBuilder
     {
         foreach ($values->items as $quantity => $text) {
             $item = $node->addChild('item');
-            $item->addAttribute('quantity', (string)$quantity);
+            $item->addAttribute('quantity', (string) $quantity);
             $item[0] = $text;
         }
     }

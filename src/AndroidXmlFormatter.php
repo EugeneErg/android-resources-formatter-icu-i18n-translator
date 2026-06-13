@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace EugeneErg\AndroidResourcesFormatterIcuI18nTranslator;
 
@@ -14,7 +14,6 @@ use EugeneErg\AndroidResourcesFormatterIcuI18nTranslator\ValueObjects\FormatType
 use EugeneErg\AndroidResourcesFormatterIcuI18nTranslator\ValueObjects\PrintFormat;
 use EugeneErg\IcuI18nTranslator\DataTransferObjects\FilePathContainer;
 use EugeneErg\IcuI18nTranslator\FormatterInterface;
-use EugeneErg\ICUMessageFormatParser\DataTransferObjects\AbstractSelect;
 use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Date;
 use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Duration;
 use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Number;
@@ -28,6 +27,12 @@ use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Types;
 use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Variable;
 use EugeneErg\ICUMessageFormatParser\Parser;
 use RuntimeException;
+
+use function count;
+
+use const PREG_SET_ORDER;
+use const PREG_UNMATCHED_AS_NULL;
+use const SORT_NUMERIC;
 
 final readonly class AndroidXmlFormatter implements FormatterInterface
 {
@@ -83,18 +88,24 @@ final readonly class AndroidXmlFormatter implements FormatterInterface
 
     private function parseString(string $input): array
     {
-        $pattern = '{
-            (?<spec>
-                %
-                (?:(?<index>\d+)\$)?
-                (?<flags>[' . implode('', array_column(FormatFlag::cases(), 'value')) .  ']*)
-                (?<width>\d+)?
-                (?:\.(?<precision>\d+))?
-                (?<type>[' . implode('', array_column(FormatType::cases(), 'value')) .  '])
-            )
-            |
-            (?<text>[^%]+)
-        }xu';
+        $pattern = <<<'EOD'
+            {
+                        (?<spec>
+                            %
+                            (?:(?<index>\d+)\$)?
+                            (?<flags>[
+            EOD . implode('', array_column(FormatFlag::cases(), 'value')) . <<<'EOD'
+            ]*)
+                            (?<width>\d+)?
+                            (?:\.(?<precision>\d+))?
+                            (?<type>[
+            EOD . implode('', array_column(FormatType::cases(), 'value')) . <<<'EOD'
+            ])
+                        )
+                        |
+                        (?<text>[^%]+)
+                    }xu
+            EOD;
         preg_match_all($pattern, $input, $matches, PREG_SET_ORDER|PREG_UNMATCHED_AS_NULL);
 
         $result = [];
@@ -228,22 +239,18 @@ final readonly class AndroidXmlFormatter implements FormatterInterface
 
     private function icuNumberToPrintF(Number $item): string
     {
-
     }
 
     private function icuOrdinalToPrintF(Ordinal $item): string
     {
-
     }
 
     private function icuPatternToPrintF(Pattern $item): string
     {
-
     }
 
     private function icuSpellOutToPrintF(SpellOut $item): string
     {
-
     }
 
     private function icuTextToPrintF(Text $item): string

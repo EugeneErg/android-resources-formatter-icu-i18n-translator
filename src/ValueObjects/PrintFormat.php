@@ -1,12 +1,15 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace EugeneErg\AndroidResourcesFormatterIcuI18nTranslator\ValueObjects;
 
 use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Number;
 use InvalidArgumentException;
 use Stringable;
+
+use function in_array;
+use function strlen;
 
 final readonly class PrintFormat implements Stringable
 {
@@ -15,9 +18,9 @@ final readonly class PrintFormat implements Stringable
      */
     public function __construct(
         public FormatType $type,
-        public ?int $index = null,
-        public ?int $width = null,
-        public ?int $precision = null,
+        public int|null $index = null,
+        public int|null $width = null,
+        public int|null $precision = null,
         public array $flags = [],
     ) {
     }
@@ -47,7 +50,6 @@ final readonly class PrintFormat implements Stringable
         return $result;
     }
 
-
     /**
      * Парсит одиночный спецификатор формата, например "%1$-10.2f".
      * Строка должна начинаться с '%'.
@@ -56,7 +58,7 @@ final readonly class PrintFormat implements Stringable
      */
     public static function fromString(string $specifier): self
     {
-        $pattern = '/^%(?:(\d+)\$)?([-+ 0,(]*)(\d+)?(?:\.(\d+))?([sS dDefEcbxXon%])$/';
+        $pattern = '/^%(?:(\\d+)\\$)?([-+ 0,(]*)(\\d+)?(?:\\.(\\d+))?([sS dDefEcbxXon%])$/';
 
         if (!preg_match($pattern, $specifier, $matches)) {
             throw new InvalidArgumentException("Невалидный printf-спецификатор: \"{$specifier}\"");
@@ -80,8 +82,8 @@ final readonly class PrintFormat implements Stringable
             }
         }
 
-        $width = $rawWidth !== '' ? (int)$rawWidth : null;
-        $precision = $rawPrecision !== '' ? (int)$rawPrecision : null;
+        $width = $rawWidth !== '' ? (int) $rawWidth : null;
+        $precision = $rawPrecision !== '' ? (int) $rawPrecision : null;
 
         return new self(type: $type, index: $index, width: $width, precision: $precision, flags: $flags);
     }
@@ -165,11 +167,11 @@ final readonly class PrintFormat implements Stringable
      * Если возможно несколько вариантов — выбирается самый короткий.
      * Возвращает null если конвертация невозможна.
      *
-     * @param int|null $position Порядковый номер аргумента (0-based), используется
+     * @param int $position Порядковый номер аргумента (0-based), используется
      *                           когда index не задан (%s без %1$). Например, первый
      *                           %s в строке → position=0.
      */
-    public function toIcuPattern(int $position = 0): ?string
+    public function toIcuPattern(int $position = 0): string|null
     {
         $icuIndex = $this->index !== null ? $this->index - 1 : $position;
 
@@ -195,9 +197,9 @@ final readonly class PrintFormat implements Stringable
      * Выбирает самый короткий вариант из непустых.
      * Если все варианты null — возвращает null.
      */
-    private function shortest(?string ...$candidates): ?string
+    private function shortest(string|null ...$candidates): string|null
     {
-        $valid = array_filter($candidates, fn($c) => $c !== null);
+        $valid = array_filter($candidates, static fn ($c) => $c !== null);
 
         if (empty($valid)) {
             return null;
@@ -205,8 +207,7 @@ final readonly class PrintFormat implements Stringable
 
         return array_reduce(
             $valid,
-            fn (?string $carry, string $item) =>
-            $carry === null || strlen($item) < strlen($carry) ? $item : $carry,
+            static fn (string|null $carry, string $item) => $carry === null || strlen($item) < strlen($carry) ? $item : $carry,
             null,
         );
     }
@@ -214,7 +215,7 @@ final readonly class PrintFormat implements Stringable
     /**
      * Вариант через skeleton (::).
      * Например: %05d → {0, number, ::00000}
-     *           %+d  → {0, number, ::+! integer}
+     *           %+d  → {0, number, ::+! integer}.
      */
     private function buildIcuIntegerSkeleton(int $icuIndex): string
     {
@@ -223,7 +224,6 @@ final readonly class PrintFormat implements Stringable
         $result = new Number(
             value: (string) $icuIndex,
             options: new Number\Skeleton(
-
             ),
         );
 
@@ -252,9 +252,9 @@ final readonly class PrintFormat implements Stringable
     /**
      * Вариант через DecimalFormat паттерн (без ::).
      * Например: %05d → {0, number, 00000}
-     *           %,d  → {0, number, #,##0}
+     *           %,d  → {0, number, #,##0}.
      */
-    private function buildIcuIntegerPattern(int $icuIndex): ?string
+    private function buildIcuIntegerPattern(int $icuIndex): string|null
     {
         // Паттерн не поддерживает знак через префикс в том же виде,
         // поэтому для sign-always / sign-accounting возвращаем null —
@@ -287,7 +287,7 @@ final readonly class PrintFormat implements Stringable
     /**
      * Вариант через skeleton (::).
      * Например: %.2f  → {0, number, ::.##}
-     *           %+.2f → {0, number, ::+! .##}
+     *           %+.2f → {0, number, ::+! .##}.
      */
     private function buildIcuFloatSkeleton(int $icuIndex): string
     {
@@ -309,9 +309,9 @@ final readonly class PrintFormat implements Stringable
         // Ширина = все символы включая знак, цифры, точку, дробь
         if ($this->hasFlag(FormatFlag::ZeroPad) && $this->width !== null) {
             $fracPrecision = $this->precision ?? 6; // printf default
-            $fracLen       = $fracPrecision > 0 ? $fracPrecision + 1 : 0; // +1 для точки
-            $intDigits     = max(1, $this->width - $fracLen);
-            $fracPart      = $fracPrecision > 0
+            $fracLen = $fracPrecision > 0 ? $fracPrecision + 1 : 0; // +1 для точки
+            $intDigits = max(1, $this->width - $fracLen);
+            $fracPart = $fracPrecision > 0
                 ? '.' . str_repeat('#', $fracPrecision)
                 : '';
             $tokens[] = str_repeat('0', $intDigits) . $fracPart;
@@ -330,13 +330,13 @@ final readonly class PrintFormat implements Stringable
      * Вариант через DecimalFormat паттерн (без ::).
      * Например: %.2f   → {0, number, #.##}
      *           %(,f   → {0, number, #,##0.######;(#,##0.######)}
-     *           %010.2f → {0, number, 00000000.##}
+     *           %010.2f → {0, number, 00000000.##}.
      */
-    private function buildIcuFloatPattern(int $icuIndex): ?string
+    private function buildIcuFloatPattern(int $icuIndex): string|null
     {
         // Parentheses реализуется через ; в DecimalFormat паттерне
         $hasParens = $this->hasFlag(FormatFlag::Parentheses);
-        $hasGroup  = $this->hasFlag(FormatFlag::GroupThousands);
+        $hasGroup = $this->hasFlag(FormatFlag::GroupThousands);
 
         // ForceSign через паттерн не выражается лаконично — скелетон лучше
         if ($this->hasFlag(FormatFlag::ForceSign)) {
@@ -345,15 +345,15 @@ final readonly class PrintFormat implements Stringable
 
         // Дробная часть
         $fracPrecision = $this->precision ?? 6;
-        $fracPart      = $fracPrecision > 0
+        $fracPart = $fracPrecision > 0
             ? '.' . str_repeat('#', $fracPrecision)
             : '';
 
         // Целая часть с нулями / группировкой
         if ($this->hasFlag(FormatFlag::ZeroPad) && $this->width !== null) {
-            $fracLen   = $fracPrecision > 0 ? $fracPrecision + 1 : 0;
+            $fracLen = $fracPrecision > 0 ? $fracPrecision + 1 : 0;
             $intDigits = max(1, $this->width - $fracLen);
-            $intPart   = $hasGroup
+            $intPart = $hasGroup
                 ? '#,##' . str_repeat('0', max(1, $intDigits - 4)) . $fracPart
                 : str_repeat('0', $intDigits) . $fracPart;
         } else {

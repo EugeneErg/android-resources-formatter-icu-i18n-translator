@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace EugeneErg\AndroidResourcesFormatterIcuI18nTranslator;
 
@@ -14,6 +14,8 @@ use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Plural;
 use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Types;
 use EugeneErg\ICUMessageFormatParser\Parser;
 use RuntimeException;
+
+use const SORT_NUMERIC;
 
 final readonly class AndroidIcuXmlFormatter implements FormatterInterface
 {

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace EugeneErg\AndroidResourcesFormatterIcuI18nTranslator\Parser;
 
@@ -13,8 +13,6 @@ use SimpleXMLElement;
 final readonly class AndroidStringsParser
 {
     /**
-     * @param string $xmlContent
-     *
      * @return array<XmlPlurals|XmlString|XmlStringArray>
      */
     public function parse(string $xmlContent): array
@@ -23,7 +21,7 @@ final readonly class AndroidStringsParser
         $xml = simplexml_load_string($xmlContent);
 
         if ($xml === false) {
-            throw new RuntimeException("Invalid XML");
+            throw new RuntimeException('Invalid XML');
         }
 
         $result = [];
