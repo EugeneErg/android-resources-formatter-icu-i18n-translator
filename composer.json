@@ -4,9 +4,9 @@
   "minimum-stability": "stable",
   "license": "MIT",
   "require": {
-    "eugene-erg/icu-i18n-translator": "^1.0",
     "ext-libxml": "*",
-    "ext-simplexml": "*"
+    "ext-simplexml": "*",
+    "eugene-erg/icu-i18n-translator": "^1.0"
   },
   "autoload": {
     "psr-4": {
