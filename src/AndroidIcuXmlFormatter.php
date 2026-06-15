@@ -15,6 +15,8 @@ use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Types;
 use EugeneErg\ICUMessageFormatParser\Parser;
 use RuntimeException;
 
+use function is_string;
+
 use const SORT_NUMERIC;
 
 final readonly class AndroidIcuXmlFormatter implements FormatterInterface
@@ -53,7 +55,7 @@ final readonly class AndroidIcuXmlFormatter implements FormatterInterface
                 $children = [];
 
                 foreach ($item->items as $key => $child) {
-                    $children[$key] = $this->parser->quote($child);
+                    $children[$key] = $child;
                 }
 
                 $result[$name] = new FilePathContainer($children);
@@ -82,7 +84,11 @@ final readonly class AndroidIcuXmlFormatter implements FormatterInterface
         }
 
         foreach ($path->children as $child) {
-            $result[] = $this->parser->quote($child);
+            if (!is_string($child)) {
+                throw new RuntimeException('String-array items must be strings in ICU formatter');
+            }
+
+            $result[] = $child;
         }
 
         return new XmlStringArray($result);

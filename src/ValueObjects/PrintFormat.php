@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace EugeneErg\AndroidResourcesFormatterIcuI18nTranslator\ValueObjects;
 
-use EugeneErg\ICUMessageFormatParser\DataTransferObjects\Number;
 use InvalidArgumentException;
 use Stringable;
 
@@ -13,6 +12,14 @@ use function strlen;
 
 final readonly class PrintFormat implements Stringable
 {
+    /**
+     * Префикс для имён ICU-переменных, соответствующих позиционным printf-аргументам.
+     *
+     * Начиная с eugene-erg/icu-message-format-parser 1.2.7 числовые имена переменных
+     * (как в "{0}") поддерживаются, поэтому префикс пустой и индекс используется как есть.
+     */
+    private const ARG_PREFIX = '';
+
     /**
      * @param FormatFlag[] $flags
      */
@@ -88,6 +95,27 @@ final readonly class PrintFormat implements Stringable
         return new self(type: $type, index: $index, width: $width, precision: $precision, flags: $flags);
     }
 
+    /**
+     * Преобразует 0-based индекс аргумента в имя ICU-переменной (например, "arg0").
+     */
+    public static function argName(int $icuIndex): string
+    {
+        return self::ARG_PREFIX . $icuIndex;
+    }
+
+    /**
+     * Извлекает 0-based индекс аргумента из имени ICU-переменной (например, "arg0" → 0).
+     * Возвращает null, если имя не соответствует формату "arg<N>".
+     */
+    public static function argIndex(string $name): int|null
+    {
+        if (preg_match('/^' . self::ARG_PREFIX . '(\\d+)$/', $name, $matches) !== 1) {
+            return null;
+        }
+
+        return (int) $matches[1];
+    }
+
     public function hasFlag(FormatFlag $flag): bool
     {
         return in_array($flag, $this->flags, strict: true);
@@ -153,6 +181,8 @@ final readonly class PrintFormat implements Stringable
             FormatType::Hex => 'hex (нижний регистр)',
             FormatType::HexUpper => 'hex (верхний регистр)',
             FormatType::Octal => 'восьмеричное',
+            FormatType::Newline => 'перенос строки',
+            FormatType::Percent => 'знак процента',
         };
 
         return implode(', ', $parts);
@@ -168,17 +198,18 @@ final readonly class PrintFormat implements Stringable
      * Возвращает null если конвертация невозможна.
      *
      * @param int $position Порядковый номер аргумента (0-based), используется
-     *                           когда index не задан (%s без %1$). Например, первый
-     *                           %s в строке → position=0.
+     *                      когда index не задан (%s без %1$). Например, первый
+     *                      %s в строке → position=0.
      */
     public function toIcuPattern(int $position = 0): string|null
     {
         $icuIndex = $this->index !== null ? $this->index - 1 : $position;
+        $argName = self::argName($icuIndex);
 
         return match ($this->type) {
             FormatType::Percent => '%',
             FormatType::Newline => "\n",
-            FormatType::String => "{{$icuIndex}}",
+            FormatType::String => "{{$argName}}",
             FormatType::Decimal => $this->shortest(
                 $this->buildIcuIntegerSkeleton($icuIndex),
                 $this->buildIcuIntegerPattern($icuIndex),
@@ -187,8 +218,8 @@ final readonly class PrintFormat implements Stringable
                 $this->buildIcuFloatSkeleton($icuIndex),
                 $this->buildIcuFloatPattern($icuIndex),
             ),
-            FormatType::Scientific => "{{$icuIndex}, number, ::scientific}",
-            FormatType::Boolean => "{{$icuIndex}, select, true{true} false{false} other{false}}",
+            FormatType::Scientific => "{{$argName}, number, ::scientific}",
+            FormatType::Boolean => "{{$argName}, select, true{true} false{false} other{false}}",
             default => null,
         };
     }
@@ -221,22 +252,16 @@ final readonly class PrintFormat implements Stringable
     {
         $tokens = [];
 
-        $result = new Number(
-            value: (string) $icuIndex,
-            options: new Number\Skeleton(
-            ),
-        );
-
         // Знак
         if ($this->hasFlag(FormatFlag::ForceSign)) {
-            $tokens[] = '+!';          // sign-always concise
+            $tokens[] = 'sign-always';
         } elseif ($this->hasFlag(FormatFlag::Parentheses)) {
             $tokens[] = 'sign-accounting';
         }
 
         // Разделитель тысяч
         if ($this->hasFlag(FormatFlag::GroupThousands)) {
-            $tokens[] = ',';           // group-on concise
+            $tokens[] = 'group-thousands';
         }
 
         // Ведущие нули: %05d → 00000
@@ -246,7 +271,7 @@ final readonly class PrintFormat implements Stringable
             $tokens[] = 'integer';
         }
 
-        return '{' . $icuIndex . ', number, ::' . implode(' ', $tokens) . '}';
+        return '{' . self::argName($icuIndex) . ', number, ::' . implode(' ', $tokens) . '}';
     }
 
     /**
@@ -271,11 +296,11 @@ final readonly class PrintFormat implements Stringable
                 $pattern = '#,##' . str_repeat('0', max(1, $this->width - 4));
             }
 
-            return '{' . $icuIndex . ', number, ' . $pattern . '}';
+            return '{' . self::argName($icuIndex) . ', number, ' . $pattern . '}';
         }
 
         if ($this->hasFlag(FormatFlag::GroupThousands)) {
-            return '{' . $icuIndex . ', number, #,##0}';
+            return '{' . self::argName($icuIndex) . ', number, #,##0}';
         }
 
         // Базовый integer — skeleton короче
@@ -289,25 +314,32 @@ final readonly class PrintFormat implements Stringable
      * Например: %.2f  → {0, number, ::.##}
      *           %+.2f → {0, number, ::+! .##}.
      */
-    private function buildIcuFloatSkeleton(int $icuIndex): string
+    private function buildIcuFloatSkeleton(int $icuIndex): string|null
     {
         $tokens = [];
 
+        $hasZeroPadWidth = $this->hasFlag(FormatFlag::ZeroPad) && $this->width !== null;
+
+        // ForceSign + ZeroPad не выражается в skeleton (паттерн-форма справляется)
+        if ($hasZeroPadWidth && ($this->hasFlag(FormatFlag::ForceSign) || $this->hasFlag(FormatFlag::Parentheses))) {
+            return null;
+        }
+
         // Знак
         if ($this->hasFlag(FormatFlag::ForceSign)) {
-            $tokens[] = '+!';
+            $tokens[] = 'sign-always';
         } elseif ($this->hasFlag(FormatFlag::Parentheses)) {
             $tokens[] = 'sign-accounting';
         }
 
         // Разделитель тысяч
         if ($this->hasFlag(FormatFlag::GroupThousands)) {
-            $tokens[] = ',';
+            $tokens[] = 'group-thousands';
         }
 
         // Ведущие нули + ширина: %010.2f
         // Ширина = все символы включая знак, цифры, точку, дробь
-        if ($this->hasFlag(FormatFlag::ZeroPad) && $this->width !== null) {
+        if ($hasZeroPadWidth) {
             $fracPrecision = $this->precision ?? 6; // printf default
             $fracLen = $fracPrecision > 0 ? $fracPrecision + 1 : 0; // +1 для точки
             $intDigits = max(1, $this->width - $fracLen);
@@ -323,7 +355,7 @@ final readonly class PrintFormat implements Stringable
         }
         // Без точности и без zeroPad — пустой skeleton (базовый float)
 
-        return '{' . $icuIndex . ', number, ::' . implode(' ', $tokens) . '}';
+        return '{' . self::argName($icuIndex) . ', number, ::' . implode(' ', $tokens) . '}';
     }
 
     /**
@@ -332,16 +364,14 @@ final readonly class PrintFormat implements Stringable
      *           %(,f   → {0, number, #,##0.######;(#,##0.######)}
      *           %010.2f → {0, number, 00000000.##}.
      */
-    private function buildIcuFloatPattern(int $icuIndex): string|null
+    private function buildIcuFloatPattern(int $icuIndex): string
     {
         // Parentheses реализуется через ; в DecimalFormat паттерне
         $hasParens = $this->hasFlag(FormatFlag::Parentheses);
         $hasGroup = $this->hasFlag(FormatFlag::GroupThousands);
 
-        // ForceSign через паттерн не выражается лаконично — скелетон лучше
-        if ($this->hasFlag(FormatFlag::ForceSign)) {
-            return null;
-        }
+        // ForceSign через паттерн: +positive;-negative
+        $hasForceSign = $this->hasFlag(FormatFlag::ForceSign);
 
         // Дробная часть
         $fracPrecision = $this->precision ?? 6;
@@ -362,10 +392,12 @@ final readonly class PrintFormat implements Stringable
 
         if ($hasParens) {
             $pattern = $intPart . ';(' . $intPart . ')';
+        } elseif ($hasForceSign) {
+            $pattern = '+' . $intPart . ';-' . $intPart;
         } else {
             $pattern = $intPart;
         }
 
-        return '{' . $icuIndex . ', number, ' . $pattern . '}';
+        return '{' . self::argName($icuIndex) . ', number, ' . $pattern . '}';
     }
 }

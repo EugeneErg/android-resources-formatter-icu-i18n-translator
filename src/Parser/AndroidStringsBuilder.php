@@ -13,34 +13,52 @@ use SimpleXMLElement;
 final readonly class AndroidStringsBuilder
 {
     /**
-     * @param array<XmlPlurals|XmlString|XmlStringArray> $data
+     * @param array<int|string, XmlPlurals|XmlString|XmlStringArray> $data
      */
     public function build(array $data): string
     {
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><resources/>');
 
         foreach ($data as $name => $entry) {
-            if (!isset($entry['type'], $entry['value'])) {
-                continue;
+            if ($entry instanceof XmlString) {
+                $node = $xml->addChild('string');
+
+                if ($node === null) {
+                    throw new RuntimeException("Failed to add child node 'string'");
+                }
+
+                $node->addAttribute('name', (string) $name);
+                $this->appendString($node, $entry);
+            } elseif ($entry instanceof XmlStringArray) {
+                $node = $xml->addChild('string-array');
+
+                if ($node === null) {
+                    throw new RuntimeException("Failed to add child node 'string-array'");
+                }
+
+                $node->addAttribute('name', (string) $name);
+                $this->appendArray($node, $entry);
+            } elseif ($entry instanceof XmlPlurals) {
+                $node = $xml->addChild('plurals');
+
+                if ($node === null) {
+                    throw new RuntimeException("Failed to add child node 'plurals'");
+                }
+
+                $node->addAttribute('name', (string) $name);
+                $this->appendPlurals($node, $entry);
+            } else {
+                throw new RuntimeException('Unknown entry type');
             }
-
-            $node = $xml->addChild($entry['type']);
-            $node->addAttribute('name', $name);
-            match (true) {
-                $entry instanceof XmlString => $this->appendString($node, $entry),
-                $entry instanceof XmlStringArray => $this->appendArray($node, $entry),
-                $entry instanceof XmlPlurals => $this->appendPlurals($node, $entry),
-            };
-
-            match ($entry['type']) {
-                'string' => $this->appendString($node, $entry['value']),
-                'plurals' => $this->appendPlurals($node, $entry['value']),
-                'string-array' => $this->appendArray($node, $entry['value']),
-                default => throw new RuntimeException("Unknown type '{$entry['type']}'"),
-            };
         }
 
-        return $xml->asXML();
+        $result = $xml->asXML();
+
+        if ($result === false) {
+            throw new RuntimeException('Failed to generate XML');
+        }
+
+        return $result;
     }
 
     private function appendString(SimpleXMLElement $node, XmlString $value): void
